@@ -1,0 +1,20 @@
+﻿<Properties StartupConfiguration="{C14EACB3-530C-4534-B3BA-BD1BEEDB49C8}|https">
+  <MonoDevelop.Ide.ItemProperties.meta PreferredExecutionTarget="/Applications/Google Chrome.app" FirstBuild="True" />
+  <MultiItemStartupConfigurations />
+  <MonoDevelop.Ide.Workbench>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="meta" expanded="True">
+            <Node name="meta" expanded="True" />
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+</Properties>
