@@ -27,3 +27,24 @@ def home(request):
 
     return HttpResponse(msg, content_type=' text/html', charset='utf-8')
 
+# Path parameter
+# http://127.0.0.1:8000/getuser/John/1
+def pathview(request, name, id): 
+    return HttpResponse("Name: {} UserID: {}".format(name, id))
+
+# Query parameter
+# http://127.0.0.1:8000/getuser/?name=John&id=1
+def qryview(request): 
+    name = request.GET['name'] 
+    id = request.GET['id'] 
+    return HttpResponse("Name:{} UserID:{}".format(name, id)) 
+
+# Body parameter
+def showform(request): 
+    return render(request, "form.html") 
+
+def getform(request): 
+    if request.method == "POST":
+        id=request.POST['id']
+        name=request.POST['name']
+    return HttpResponse("Name: {} UserID: {}".format(name, id)) 
