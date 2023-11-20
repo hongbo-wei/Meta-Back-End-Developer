@@ -1,9 +1,19 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from .forms import BookingForm
 
 # Create your views here.
 def index(request):
     return HttpResponse("Hello, world. This is the index view of Demoapp.")
+
+def form_view(request):
+    form = BookingForm()
+    if request.method == 'POST':
+        form = BookingForm(request.POST)
+        if form.is_valid():
+            form.save()
+    context = {"form" : form}
+    return render(request, "booking.html", context)
 
 def home(request):
     path = request.path
