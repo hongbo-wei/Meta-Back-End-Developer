@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/hongbo_wei/Projects/meta/meta/meta.csproj",
+      "projectUniqueName": "/Users/hongbo_wei/Downloads/GitHub/meta-back-end-developer-professional-certificate/meta/meta/meta.csproj",
       "projectName": "meta",
-      "projectPath": "/Users/hongbo_wei/Projects/meta/meta/meta.csproj",
+      "projectPath": "/Users/hongbo_wei/Downloads/GitHub/meta-back-end-developer-professional-certificate/meta/meta/meta.csproj",
       "packagesPath": "/Users/hongbo_wei/.nuget/packages/",
-      "outputPath": "/Users/hongbo_wei/Projects/meta/meta/obj/",
+      "outputPath": "/Users/hongbo_wei/Downloads/GitHub/meta-back-end-developer-professional-certificate/meta/meta/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/hongbo_wei/.nuget/NuGet/NuGet.Config"
