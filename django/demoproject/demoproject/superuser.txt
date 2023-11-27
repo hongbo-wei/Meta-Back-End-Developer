@@ -1,0 +1,3 @@
+Username: hongbo_wei
+Email address: hongbo_wei@outlook.com
+Password: DjangoPractice666
