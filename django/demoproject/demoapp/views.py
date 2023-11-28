@@ -28,27 +28,27 @@ def form_view(request):
     context = {"form" : form}
     return render(request, "booking.html", context)
 
-def home(request):
-    path = request.path
-    address = request.META['REMOTE_ADDR']
-    scheme = request.scheme
-    method = request.method
-    user_agent = request.META['HTTP_USER_AGENT']
-    path_info = request.path_info
+# def home(request):
+#     path = request.path
+#     address = request.META['REMOTE_ADDR']
+#     scheme = request.scheme
+#     method = request.method
+#     user_agent = request.META['HTTP_USER_AGENT']
+#     path_info = request.path_info
 
-    response = HttpResponse()
-    response.headers["Age"] = 20
+#     response = HttpResponse()
+#     response.headers["Age"] = 20
 
-    msg = f"""<br>
-        <br>Path: {path}
-        <br>Scheme: {scheme}
-        <br>Method: {method}
-        <br>User agent: {user_agent}
-        <br>Path info: {path_info}
-        <br>Response header: {response.headers}
-    """
+#     msg = f"""<br>
+#         <br>Path: {path}
+#         <br>Scheme: {scheme}
+#         <br>Method: {method}
+#         <br>User agent: {user_agent}
+#         <br>Path info: {path_info}
+#         <br>Response header: {response.headers}
+#     """
 
-    return HttpResponse(msg, content_type=' text/html', charset='utf-8')
+#     return HttpResponse(msg, content_type=' text/html', charset='utf-8')
 
 # Path parameter
 # http://127.0.0.1:8000/getuser/John/1
@@ -71,3 +71,16 @@ def getform(request):
         id=request.POST['id']
         name=request.POST['name']
     return HttpResponse("Name: {} UserID: {}".format(name, id))
+
+# Template inheritance
+def home(request): 
+    return render(request, "home.html", {})
+
+def register(request): 
+    return render(request, "register.html", {})
+
+def login(request): 
+    return render(request, "login.html", {})
+
+def about(request): 
+    return render(request, "about.html", {})
