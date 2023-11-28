@@ -3,8 +3,21 @@ from django.http import HttpResponse
 from .forms import BookingForm
 
 # Create your views here.
-def index(request):
-    return HttpResponse("Hello, world. This is the index view of Demoapp.")
+# def index(request):
+#     return HttpResponse("Hello, world. This is the index view of Demoapp.")
+
+def index(request): 
+    context={'user':'admin',
+             'profession':'Teacher'
+            } 
+    langs = ['Python', 'Java', 'PHP', 'Ruby', 'Rust']
+    dct = {'digits': ['One', 'Two', 'Three'],'tens': ['Ten', 'Twenty', 'Thirty']} 
+    amt = 100
+    return render(request, 'index.html', context={'context': context,
+                                                  'langs': langs,
+                                                  'dct': dct,
+                                                  'amt': amt,
+                                                  }) 
 
 def form_view(request):
     form = BookingForm()

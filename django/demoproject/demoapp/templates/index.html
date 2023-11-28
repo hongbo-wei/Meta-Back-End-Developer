@@ -1,0 +1,30 @@
+{% if context.user == "admin" %}
+<h2>Welcome {{ context.user }}</h2>
+<p>Profession: {{ context.profession }}</p>
+{% with rate=5 %}
+<p>Interest = {{amt}}*{{ rate }};</p>
+{% endwith %}
+<h3>List of Languages</h3>
+<ul>
+  {% for lang in langs %}
+  <li>{{ forloop.counter }} : {{ lang }}</li>
+  {% endfor %} {% for lang in langs %}
+  <li>{{ forloop.revcounter }} : {{ lang }}</li>
+  {% endfor %}
+</ul>
+<h1>Nested loops</h1>
+
+<p>{{ langs|join:" _ " }}</p>
+
+{% for key, values in dct.items %}
+<p>{{ forloop.parentloop.counter }}:{{ key }}</p>
+<ul>
+  {% for value in values %}
+  <li>{{ value }}</li>
+  {% endfor %}
+</ul>
+{% endfor %} {% comment "Optional note" %}
+<p>Commented out text</p>
+{% endcomment %} {% include 'form.html' %} {% else %}
+<h2>Welcome Guest. You dont have admin access</h2>
+{% endif %}
