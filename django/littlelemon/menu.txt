@@ -1,0 +1,19 @@
+Name: Greek salad
+Price: 12
+Description: Our famous Greek salad of crispy lettuce, peppers, olives, and our
+Chicago-style feta cheese. Garnished with crispy onion and salty capers.
+
+
+Name: Grilled fish
+Price: 9
+Description: The fish is swiftly grilled over medium- or high-heat coals or over medium- or high-heat gas grill burners. Thinner fillets and steaks are grilled over direct fire.
+
+
+Name: Bruschetta
+Price: 11
+Description: An Italian antipasto called bruschetta is made of grilled bread that has been smeared with garlic and seasoned with salt and olive oil. Toppings of tomato, veggies, beans, cured pork, or cheese are examples of variations. In Italy, a brustolina grill is frequently used to create bruschetta.
+
+
+Name: Lemon dessert
+Price: 7
+Description: This cake is adored not only for its flavor but also for its texture and simplicity. A base of creamed butter and sugar, eggs, lemon, milk, and flour are among the most basic ingredients. We omitted the brown sugar and substituted extra granulated sugar instead.
