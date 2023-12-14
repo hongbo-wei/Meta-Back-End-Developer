@@ -2,6 +2,8 @@
 
 ## Virtual Environment
 
+1. ### Apply venv
+
 Create Virtual Environment
 
 `python3 -m venv env`
@@ -13,6 +15,15 @@ Activate Virtual Environment
 Deactivate Virtual Environment
 
 `deactivate`
+
+2. ### Apply pipenv
+
+`pipenv install django`
+
+To activate this project's virtualenv, run `pipenv shell`.
+Alternatively, run a command inside the virtualenv with `pipenv run`.
+
+Exit shell by `exit`
 
 ## Django
 
