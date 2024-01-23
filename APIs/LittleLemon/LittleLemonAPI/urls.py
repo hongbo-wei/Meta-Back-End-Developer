@@ -3,7 +3,8 @@ from . import views
 from rest_framework.authtoken.views import obtain_auth_token
 
 urlpatterns = [
-    path('menu-items', views.MenuItemView.as_view()),
+    path('menu-items', views.MenuItemView.as_view({'get':'list'})),
+    # path('menu-items',views.MenuItemsViewSet.as_view({'get':'list'})),
     path('menu-items/<int:pk>', views.SingleMenuItemView.as_view()),
     path('category', views.CategoriesView.as_view()),
     path('api-token-auth', obtain_auth_token), # obtain user token and test if its group have that permission
