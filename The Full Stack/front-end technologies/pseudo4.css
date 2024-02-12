@@ -1,0 +1,22 @@
+/* li::first-letter {
+    color: coral;
+    font-size: 3em;
+    font-weight: bold;
+    line-height: 1;
+} */
+
+ul {
+    list-style-type: none;
+}
+
+li::first-line  {
+    color: lightseagreen;
+    text-decoration: underline;
+    line-height: 1;
+}
+
+li::selection {
+    color:brown;
+    background-color: antiquewhite;
+    line-height: 1;
+}
