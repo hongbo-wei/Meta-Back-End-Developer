@@ -20,3 +20,26 @@ li::selection {
     background-color: antiquewhite;
     line-height: 1;
 }
+
+li::marker {
+    color: cornflowerblue;
+    content: '<> ';
+    font-size: 1.1em;
+}
+
+#tips::before{
+    background: darkkhaki;
+    color:darkslategray;
+    content: "Tip:";
+    padding-left: 3px;
+    padding-right: 5px;
+    border-radius: 10%;
+}
+
+#tips::after{
+    background:darkkhaki;
+    color:darkslategray;
+    content: "!!";
+    padding-right: 5px;
+    border-radius: 20%;
+}
