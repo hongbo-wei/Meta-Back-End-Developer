@@ -1,13 +1,16 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import User, Group
-from rest_framework import generics, permissions, status, viewsets
+from django.http import JsonResponse  # Import JsonResponse
+from django.utils import timezone
+from rest_framework import generics, status, viewsets
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.views import APIView
-from .models import *
-from .serializers import *
+from .models import Category, MenuItem, Cart, Order, OrderItem
+from .serializers import CategorySerializer, MenuItemSerializer, CartSerializer, OrderSerializer, OrderItemSerializer, UserSerializer
 from .throttles import TenCallsPerMinute
 
 # Create your views here.
@@ -15,135 +18,388 @@ class CategoriesView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
-class MenuItemView(viewsets.ModelViewSet):
-# class MenuItemView(generics.ListCreateAPIView): #PUT, PATCH, DELETE
+
+# Menu-items endpoints
+# menu-items
+class MenuItemsView(viewsets.ModelViewSet):
+# class MenuItemsView(generics.ListCreateAPIView): #PUT, PATCH, DELETE
     #throttling control
     throttle_classes = [AnonRateThrottle, UserRateThrottle]
     # Conditional throttling -> https://www.coursera.org/learn/apis/supplement/1h6WO/api-throttling-for-class-based-views
 
     queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
-
-    ordering_fields = ['price', 'category']
+    
+    # filter, sorting, and searching
     filterset_fields = ['price', 'category']
+    ordering_fields = ['price', 'category']
     search_fields = ['title', 'price']
 
     # Set the permission classes for the view
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         # Check if the user is a customer or delivery crew
         if request.user.groups.filter(name__in=['Customer', 'Delivery Crew', 'Manager','']).exists():
-            return Response({"message": "Authorized"}, status=200)
+            return Response({"message": "Authorized"}, status=status.HTTP_200_OK)
         else:
-            return Response({"message": "Unauthorized"}, status=403)
+            return Response({"message": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
 
     def post(self, request):
         if request.user.groups.filter(name='Manager').exists():
-            return Response({"message": "Created"}, status=201)
+            title = request.data.get('title')
+            price = request.data.get('price')
+            feature = request.data.get('feature')
+            category_id = request.data.get('category')
+            try:
+                category = Category.objects.get(id=category_id)
+                MenuItem.objects.create(title=title, price=price, feature=feature, category=category)
+                return Response({"message": "Created"}, status=status.HTTP_201_CREATED)
+            except Category.DoesNotExist:
+                return Response({"message": "Category not found"}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({"message": "Unauthorized"}, status=403)
-
-    def put(self, request):
-        if request.user.groups.filter(name='Manager').exists():
-            return Response({"message": "Authorized"}, status=200)
-        else:
-            return Response({"message": "Unauthorized"}, status=403)
-
-    def patch(self, request):
-        if request.user.groups.filter(name='Manager').exists():
-            return Response({"message": "Authorized"}, status=200)
-        else:
-            return Response({"message": "Unauthorized"}, status=403)
-
-    def delete(self, request):
-        if request.user.groups.filter(name='Manager').exists():
-            return Response({"message": "Authorized"}, status=200)
-        else:
-            return Response({"message": "Unauthorized"}, status=403)
+            return Response({"message": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
 
 
-class SingleMenuItemView(generics.RetrieveUpdateDestroyAPIView, generics.DestroyAPIView): #POST
+# menu-items/{menuItem}
+class SingleMenuItemView(generics.RetrieveUpdateDestroyAPIView): #POST
     #throttling control
     throttle_classes = [AnonRateThrottle, UserRateThrottle]
-    queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
 
     # Set the permission classes for the view
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
+    queryset = MenuItem.objects.all()
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, pk):
         # Check if the user is a customer or delivery crew
         if request.user.groups.filter(name__in=['Customer', 'Delivery Crew', 'Manager', '']).exists():
-            return Response({"message": "Authorized"}, status=200)
+            cart_items = MenuItem.objects.filter(id=pk)
+            serializer = MenuItemSerializer(cart_items, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({"message": "Unauthorized"}, status=403)
+            return Response({"message": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
 
-    def post(self, request, *args, **kwargs):
+    def put(self, request, pk):
+        try:
+            menu_item = MenuItem.objects.get(pk=pk)
+        except MenuItem.DoesNotExist:
+            return Response({"message": "Menu item not found"}, status=status.HTTP_404_NOT_FOUND)
+        
         if request.user.groups.filter(name='Manager').exists():
-            return Response({"message": "Created"}, status=201)
+            title = request.data.get('title')
+            price = request.data.get('price')
+            if title is not None:
+                menu_item.title = title
+            if price is not None:
+                menu_item.price = price
+            menu_item.save()
+            return Response({"message": "Authorized and Updated"}, status=status.HTTP_200_OK)
         else:
-            return Response({"message": "Unauthorized"}, status=403)
+            return Response({"message": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
 
-    def put(self, request, *args, **kwargs):
+    def patch(self, request, pk):
+        try:
+            menu_item = MenuItem.objects.get(pk=pk)
+        except MenuItem.DoesNotExist:
+            return Response({"message": "Menu item not found"}, status=status.HTTP_404_NOT_FOUND)
+        
         if request.user.groups.filter(name='Manager').exists():
-            return Response({"message": "Authorized"}, status=200)
+            title = request.data.get('title')
+            price = request.data.get('price')
+            if title is not None:
+                menu_item.title = title
+            if price is not None:
+                menu_item.price = price
+            menu_item.save()
+            return Response({"message": "Authorized and Updated"}, status=status.HTTP_200_OK)
         else:
-            return Response({"message": "Unauthorized"}, status=403)
+            return Response({"message": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
 
-    def patch(self, request, *args, **kwargs):
+    def delete(self, request, pk):
         if request.user.groups.filter(name='Manager').exists():
-            return Response({"message": "Authorized"}, status=200)
+            menu_item = MenuItem.objects.get(pk=pk)
+            menu_item.delete()
+            return Response({"message": "Authorized and Deleted"}, status=status.HTTP_200_OK)
         else:
-            return Response({"message": "Unauthorized"}, status=403)
-
-    def delete(self, request, *args, **kwargs):
-        if request.user.groups.filter(name='Manager').exists():
-            return Response({"message": "Authorized"}, status=200)
-        else:
-            return Response({"message": "Unauthorized"}, status=403)
+            return Response({"message": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
 
 
-class OrderView(generics.ListCreateAPIView):
-    queryset = Order.objects.all()
-    serializer_class = OrderSerializer
-
-
-@api_view(['GET', 'POST', 'DELETe'])
+# User group management endpoints
+# Manager group
+@api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def managers(request):
-    if request.user.groups.filter(name='Manager').exists():
-        return Response({"message": "Authorized"}, status=200)
-            # username = request.data['username']
-        # if username:
-        #     user = get_object_or_404(User, username=username)
-        #     managers = Group.objects.get(name="Manager")
-        #     if request.method == 'POST':
-        #         managers.user_set.add(user)
-        #     elif request.method == 'DELETE':
-        #         managers.user_set.remove(user)
-        #     return Response({"message": "OK"})
-        return Response({"message": "error"}, status.HTTP_400_BAD_REQUEST)
+    managers_group = Group.objects.get(name="Manager")
+
+    if request.user.groups.filter(name='Manager').exists() and request.method == 'GET':
+        manager_users = User.objects.filter(groups=managers_group)
+        serializer = UserSerializer(manager_users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    elif request.user.groups.filter(name='Manager').exists() and request.method == 'POST':
+        user = get_object_or_404(User, username=request.data['username'])
+        managers_group.user_set.add(user)
+        return Response({"message": "OK"}, status=status.HTTP_201_CREATED)
     else:
-        return Response({"message": "Unauthorized"}, status=403)
+        return Response({"message": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+    
+class ManagersDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
 
-class ManagerUsersView(APIView):
-    def get(self, request):
+    def delete(self, request, userId):
+        user = get_object_or_404(User, id=userId)
+        managers_group = Group.objects.get(name="Manager")
         if request.user.groups.filter(name='Manager').exists():
-            # Assuming the 'Manager' group exists
-            manager_group = Group.objects.get(name='Manager')
-
-            # Retrieve users belonging to the 'Manager' group
-            manager_users = User.objects.filter(groups=manager_group)
-
-            # Serialize the data
-            serializer = UserSerializer(manager_users, many=True)
-
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        
+            managers_group.user_set.remove(user)
+            return Response({"message": "Success"}, status=status.HTTP_200_OK)
         else:
-            return Response({"message": "Unauthorized"}, status=403)
+            return Response({"message": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
 
+
+# Delivery Crew group
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def delivery_crews(request):
+    delivery_crews_group = Group.objects.get(name="Deliver Crew")
+
+    if request.user.groups.filter(name='Manager').exists() and request.method == 'GET':
+        delivery_crews_users = User.objects.filter(groups=delivery_crews_group)
+        serializer = UserSerializer(delivery_crews_users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    elif request.user.groups.filter(name='Manager').exists() and request.method == 'POST':
+        user = get_object_or_404(User, username=request.data['username'])
+        delivery_crews_group.user_set.add(user)
+        return Response({"message": "OK"}, status=status.HTTP_201_CREATED)
+    else:
+        return Response({"message": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+    
+
+class DeliveryCrewsDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, userId):
+        user = get_object_or_404(User, id=userId)
+        delivery_crews_group = Group.objects.get(name="Deliver Crew")
+        if request.user.groups.filter(name='Manager').exists():
+            delivery_crews_group.user_set.remove(user)
+            return Response({"message": "Success"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+    
+
+# Cart management endpoints
+class CartView(viewsets.ModelViewSet):
+    #throttling control
+    throttle_classes = [AnonRateThrottle, UserRateThrottle]
+    serializer_class = CartSerializer
+
+    # Set the permission classes for the view
+    # authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    # override default behavior of Django REST framework
+    # viewsets when using ModelViewSet
+    def get_queryset(self):
+        user = self.request.user
+        if user.groups.filter(name__in=['Customer', 'Manager']).exists():
+            queryset = Cart.objects.filter(user=user)  # Filter by authenticated user
+            return queryset
+    
+    def get(self, request):
+        if request.user.groups.filter(name__in=['Customer', 'Manager']).exists():
+            cart_items = Cart.objects.filter(user=request.user)
+            serializer = CartSerializer(cart_items, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    def post(self, request):
+        # serializer for the post form
+        serializer = CartSerializer(data=request.data)
+        user = self.request.user
+        if serializer.is_valid() and user.groups.filter(name__in=['Customer', 'Manager']).exists():
+            # Save the cart item to the database
+            serializer.save(user=user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+    def delete(self, request):
+        user = self.request.user
+        if user.groups.filter(name='Customer').exists():
+            cart_items = Cart.objects.filter(user=user)
+            cart_items.delete()
+            return Response({"message": "Cart Cleared"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+# Order management endpoints
+class OrdersView(viewsets.ModelViewSet):
+    #throttling control
+    throttle_classes = [AnonRateThrottle, UserRateThrottle]
+    
+    # filter, sorting, and searching
+    filterset_fields = ['user', 'status']
+    ordering_fields = ['user', 'status', 'total', 'date']
+    search_fields = ['user', 'status', 'date']
+
+    # Set the permission classes for the view
+    permission_classes = [IsAuthenticated]
+
+    serializer_class = OrderSerializer
+    queryset = Order.objects.all()
+    
+    def get_queryset(self):
+        user = self.request.user
+        if user:
+            if user.groups.filter(name='Customer').exists():
+                orders = Order.objects.filter(user=user)
+                return orders
+            elif user.groups.filter(name='Manager').exists():
+                orders = Order.objects.all()
+                return orders
+            elif user.groups.filter(name='Delivery Crew').exists():
+                orders = Order.objects.filter(delivery_crew=user)
+                return orders
+            else:
+                return Response({"message": "Unauthorized"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"message": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+    
+    def post(self, request):
+        user = request.user
+        if user.groups.filter(name='Customer').exists():
+            try:
+                # Get current cart items for the current user (Assuming you have a Cart model)
+                cart_items = Cart.objects.filter(user=request.user)
+                if cart_items.exists():
+                    # Calculate total price of the order
+                    total_price = sum(item.price for item in cart_items)
+                    # Check for the current date
+                    current_date = timezone.now().date()
+                    new_order = Order.objects.create(user=request.user, total=total_price, date=current_date)
+                    for cart_item in cart_items:
+                        order_item = OrderItem.objects.create(
+                            order=new_order,
+                            menuitem=cart_item.menuitem,
+                            quantity=cart_item.quantity,
+                            unit_price=cart_item.unit_price,
+                            price=cart_item.price,
+                        )
+
+                    # Delete all items from the cart for this user
+                    cart_items.delete()
+                    # Serialize the newly created order and return it in the response
+                    serializer = OrderSerializer(new_order)
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+                else:
+                    return Response({"message": "No items found in the cart."}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response({"message": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN) # 403_FORBIDDEN
+
+
+
+class SingleOrderView(generics.RetrieveUpdateDestroyAPIView):
+    #throttling control
+    throttle_classes = [AnonRateThrottle, UserRateThrottle]
+
+    # filter, sorting, and searching
+    filterset_fields = ['menuitem', 'order']
+    ordering_fields = ['menuitem', 'order', 'quantity', 'unit_price', 'price']
+    search_fields = ['menuitem', 'order']
+
+    # Set the permission classes for the view
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrderSerializer
+    queryset = Order.objects.all()
+
+    def get(self, request, pk):
+        try:
+            # Retrieve the order associated with the provided orderId
+            # when we use .first() on a QuerySet in Django
+            # the result from a collection of objects (the QuerySet) to a single object
+            order = Order.objects.filter(pk=pk).first()
+            # Check if the order belongs to the current user
+            if order.user == request.user:
+                # Retrieve all items for the order
+                order_items = OrderItem.objects.filter(order_id=pk)
+                serializer = OrderItemSerializer(order_items, many=True)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'This order does not belong to the current user.'}, status=status.HTTP_403_FORBIDDEN)
+
+        except Order.DoesNotExist:
+            return Response({'error': 'Order not found.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Update all attributes, send entire resource representation
+    # including all fields, not just the fields you want to update
+    def put(self, request, pk):
+        if request.user.groups.filter(name='Manager').exists():
+            try:
+                order = Order.objects.filter(pk=pk).first()
+            except Order.DoesNotExist:
+                return Response({"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+            # Update order status and delivery crew if provided in request data
+            delivery_status = request.data.get('status')
+            delivery_crew = request.data.get('delivery_crew')
+            if delivery_status is not None:
+                order.status = delivery_status
+            if delivery_crew is not None:
+                delivery_crew = get_object_or_404(User, id=delivery_crew)
+                order.delivery_crew = delivery_crew
+            order.save()
+            return Response({"message": "Delivery updated successfully"}, status=status.HTTP_200_OK)
+
+        else:
+            return Response({"message": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+    # Partially update one or more attributes
+    def patch(self, request, pk):
+        user = request.user
+        try:
+            order = Order.objects.get(pk=pk)
+        except Order.DoesNotExist:
+            return Response({"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+        if request.user.groups.filter(name='Manager').exists():
+            # Update order status and delivery crew if provided in request data
+            delivery_status = request.data.get('status')
+            delivery_crew = request.data.get('delivery_crew')
+            if delivery_status is not None:
+                order.status = delivery_status
+            if delivery_crew is not None:
+                delivery_crew = get_object_or_404(User, id=delivery_crew)
+                order.delivery_crew = delivery_crew
+            order.save()
+            return Response({"message": "Delivery updated successfully"}, status=status.HTTP_200_OK)
+            
+        elif request.user.groups.filter(name='Deliver Crew').exists():
+            if order.delivery_crew == user:
+                # Update order status and delivery crew if provided in request data
+                delivery_status = request.data.get('status')
+                if delivery_status is not None:
+                    order.status = delivery_status
+                order.save()
+                return Response({"message": "Delivery status updated successfully"}, status=status.HTTP_200_OK)
+            else:
+                return Response({"message": "Delivery crew id doesn't match"}, status=status.HTTP_403_FORBIDDEN)
+            
+        else:
+            return Response({"message": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+    def delete(self, request, pk):
+        if request.user.groups.filter(name='Manager').exists():
+            order_items = OrderItem.objects.filter(order=pk)
+            order_items.delete()
+            return Response({"message": "Authorized and Deleted"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+# Throttling
 @api_view()
 @throttle_classes([AnonRateThrottle])
 def throttle_check(request):
