@@ -17,6 +17,7 @@ from .throttles import TenCallsPerMinute
 class CategoriesView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    search_fields = ['title']
 
 
 # Menu-items endpoints
@@ -33,7 +34,7 @@ class MenuItemsView(viewsets.ModelViewSet):
     # filter, sorting, and searching
     filterset_fields = ['price', 'category']
     ordering_fields = ['price', 'category']
-    search_fields = ['title', 'price']
+    search_fields = ['category__title', 'title', 'price']
 
     # Set the permission classes for the view
     permission_classes = [IsAuthenticated]
@@ -89,10 +90,13 @@ class SingleMenuItemView(generics.RetrieveUpdateDestroyAPIView): #POST
         if request.user.groups.filter(name='Manager').exists():
             title = request.data.get('title')
             price = request.data.get('price')
+            feature = request.data.get('feature')
             if title is not None:
                 menu_item.title = title
             if price is not None:
                 menu_item.price = price
+            if feature is not None:
+                menu_item.feature = feature
             menu_item.save()
             return Response({"message": "Authorized and Updated"}, status=status.HTTP_200_OK)
         else:
@@ -107,10 +111,13 @@ class SingleMenuItemView(generics.RetrieveUpdateDestroyAPIView): #POST
         if request.user.groups.filter(name='Manager').exists():
             title = request.data.get('title')
             price = request.data.get('price')
+            feature = request.data.get('feature')
             if title is not None:
                 menu_item.title = title
             if price is not None:
                 menu_item.price = price
+            if feature is not None:
+                menu_item.feature = feature
             menu_item.save()
             return Response({"message": "Authorized and Updated"}, status=status.HTTP_200_OK)
         else:
@@ -201,25 +208,40 @@ class CartView(viewsets.ModelViewSet):
     # viewsets when using ModelViewSet
     def get_queryset(self):
         user = self.request.user
-        if user.groups.filter(name__in=['Customer', 'Manager']).exists():
-            queryset = Cart.objects.filter(user=user)  # Filter by authenticated user
-            return queryset
-    
+        if user.is_authenticated:
+            if user.groups.filter(name='Manager').exists():
+                return Cart.objects.all()
+            elif user.groups.filter(name='Customer').exists():
+                return Cart.objects.filter(user=user)
+        return Cart.objects.none()
+
     def get(self, request):
-        if request.user.groups.filter(name__in=['Customer', 'Manager']).exists():
-            cart_items = Cart.objects.filter(user=request.user)
-            serializer = CartSerializer(cart_items, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
+        queryset = self.get_queryset()
+        if not queryset.exists():
+            return Response({"message": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        user = self.request.user
+        if not user.groups.filter(name__in=['Customer', 'Manager']).exists():
             return Response({"message": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        serializer = CartSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK) 
 
     def post(self, request):
         # serializer for the post form
-        serializer = CartSerializer(data=request.data)
         user = self.request.user
-        if serializer.is_valid() and user.groups.filter(name__in=['Customer', 'Manager']).exists():
+        if user.groups.filter(name__in=['Customer', 'Manager']).exists():
+            # Calculate total price
+            total_price = int(request.data['quantity']) * float(request.data['unit_price'])
+            menuitem = MenuItem.objects.get(id=request.data['menuitem'])
+            # unit_price = MenuItem.objects.get(pk=menuitem).price
+            # total_price = int(request.data['quantity']) * unit_price)
+            new_cart = Cart.objects.create(user=request.user,
+                                           menuitem=menuitem,
+                                           quantity=request.data['quantity'],
+                                           unit_price=request.data['unit_price'],
+                                           price=total_price)
             # Save the cart item to the database
-            serializer.save(user=user)
+            serializer = CartSerializer(new_cart)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -262,7 +284,7 @@ class OrdersView(viewsets.ModelViewSet):
                 return orders
             elif user.groups.filter(name='Delivery Crew').exists():
                 orders = Order.objects.filter(delivery_crew=user)
-                return orders
+                return orders   
             else:
                 return Response({"message": "Unauthorized"}, status=status.HTTP_400_BAD_REQUEST)
         else:

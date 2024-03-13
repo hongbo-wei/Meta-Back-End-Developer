@@ -5,7 +5,9 @@ from django.contrib.auth.models import User
 class Category(models.Model):
     slug = models.SlugField()
     title = models.CharField(max_length=255, db_index=True)
-
+    
+    class Meta:
+        ordering = ['id']
 
 class MenuItem(models.Model):
     title = models.CharField(max_length=255, db_index=True)
@@ -41,7 +43,9 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    # However, Django uses the related_name to set the reverse relation from OrderItem to Order
+    # allowing you to access OrderItem objects from an Order object.
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='orderitems')
     menuitem = models.ForeignKey(MenuItem, on_delete=models.CASCADE)
     quantity = models.SmallIntegerField()
     unit_price = models.DecimalField(max_digits=6, decimal_places=2)

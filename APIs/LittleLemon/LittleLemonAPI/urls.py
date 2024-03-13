@@ -5,7 +5,7 @@ from rest_framework.authtoken.views import obtain_auth_token
 urlpatterns = [
     path('menu-items', views.MenuItemsView.as_view({'get':'list'})),
     path('menu-items/<int:pk>', views.SingleMenuItemView.as_view()),
-    path('category', views.CategoriesView.as_view()),
+    path('categories', views.CategoriesView.as_view()),
     path('api-token-auth', obtain_auth_token), # obtain user token and test if its group have that permission
     path('groups/manager/users', views.managers),
     path('groups/manager/users/<int:userId>', views.ManagersDeleteView.as_view(), name='managers_delete'),

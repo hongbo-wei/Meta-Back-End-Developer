@@ -3,3 +3,6 @@ manager (id-2): e7420592d672356ec93cea75b072902ef1b172fc
 delivery crew 1 (id-3): 72f66d30039453a1899fb95bb21a9ef13e971832
 delivery crew 2 (id-5): 59378d65f9452409a2d048b46111fee594ce2b65
 customer (id-4): db22145b66085441d3a6101320c405dedbd6631a
+
+username: admin, manager, delivery_crew_1, delivery_crew_2, lewis
+password for all users: lemon666happy
