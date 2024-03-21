@@ -18,4 +18,13 @@ urlpatterns = [
     path('message', views.msg),
     path('api-token-auth', obtain_auth_token, name='api_token_auth'),
     path('bookings', views.BookingViewSet.as_view({'get': 'list', 'post': 'create'})),
+
+    path('categories', views.CategoriesView.as_view()),
+    path('cart/menu-items', views.CartView.as_view()),
+    path('orders', views.OrderView.as_view()),
+    path('orders/<int:pk>', views.SingleOrderView.as_view()),
+    path('groups/manager/users', views.GroupViewSet.as_view(
+        {'get': 'list', 'post': 'create', 'delete': 'destroy'})),
+    path('groups/delivery-crew/users', views.DeliveryCrewViewSet.as_view(
+        {'get': 'list', 'post': 'create', 'delete': 'destroy'}))
 ]

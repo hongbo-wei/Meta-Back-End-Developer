@@ -120,7 +120,7 @@ class OrderSerializer(serializers.ModelSerializer):
                   'status', 'date', 'total', 'orderitem']
 
 
-class UserSerilializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id','username','email']
@@ -130,7 +130,7 @@ class UserSerilializer(serializers.ModelSerializer):
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from .models import Category, MenuItem, Cart, Order, OrderItem
-from .serializers import CategorySerializer, MenuItemSerializer, CartSerializer, OrderSerializer, UserSerilializer
+from .serializers import CategorySerializer, MenuItemSerializer, CartSerializer, OrderSerializer, UserSerializer
 from rest_framework.response import Response
 
 from rest_framework.permissions import IsAdminUser
@@ -177,6 +177,7 @@ class SingleMenuItemView(generics.RetrieveUpdateDestroyAPIView):
             permission_classes = [IsAuthenticated]
 
         return [permission() for permission in permission_classes]
+
 
 class CartView(generics.ListCreateAPIView):
     queryset = Cart.objects.all()
@@ -258,12 +259,11 @@ class SingleOrderView(generics.RetrieveUpdateAPIView):
             return super().update(request, *args, **kwargs)
 
 
-
 class GroupViewSet(viewsets.ViewSet):
     permission_classes = [IsAdminUser]
     def list(self, request):
         users = User.objects.all().filter(groups__name='Manager')
-        items = UserSerilializer(users, many=True)
+        items = UserSerializer(users, many=True)
         return Response(items.data)
 
     def create(self, request):
@@ -282,7 +282,7 @@ class DeliveryCrewViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
     def list(self, request):
         users = User.objects.all().filter(groups__name='Delivery Crew')
-        items = UserSerilializer(users, many=True)
+        items = UserSerializer(users, many=True)
         return Response(items.data)
 
     def create(self, request):
